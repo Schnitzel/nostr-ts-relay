@@ -1,0 +1,16 @@
+docker-compose-yaml: docker-compose.lagoon.yml
+
+tasks:
+  post-rollout:
+    - run:
+        name: migrations
+        command: npx knex migrate:latest
+        service: relay
+
+environments:
+  main:
+    routes:
+      - relay:
+        - nostr-relay.schnitzel.world:
+            tls-acme: true
+            insecure: Redirect
