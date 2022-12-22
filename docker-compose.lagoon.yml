@@ -16,7 +16,7 @@ services:
   db:
     image: uselagoon/postgres-14:latest
     labels:
-      lagoon.type: postgres
+      lagoon.type: postgres-single
 
   cache:
     image: uselagoon/redis-6:latest
