@@ -12,9 +12,9 @@ RUN npm run build
 
 FROM uselagoon/node-18
 
-LABEL org.opencontainers.image.title="Nostr Typescript Relay"
-LABEL org.opencontainers.image.source=https://github.com/Cameri/nostr-ts-relay
-LABEL org.opencontainers.image.description="nostr-ts-relay"
+LABEL org.opencontainers.image.title="Nostream"
+LABEL org.opencontainers.image.source=https://github.com/Cameri/nostream
+LABEL org.opencontainers.image.description="nostream"
 LABEL org.opencontainers.image.authors="Ricardo Arturo Cabral Mejía"
 LABEL org.opencontainers.image.licenses=MIT
 
@@ -32,13 +32,17 @@ ENV REDIS_USER=default
 ENV REDIS_PASSWORD=default
 
 WORKDIR /app
+RUN apk add --no-cache --update git
+
+ADD resources /app/resources
 
 COPY --from=build /build/dist .
+
 RUN npm install --omit=dev --quiet
 
 COPY ./migrations ./migrations
 COPY ./knexfile.js ./knexfile.js
-COPY ./settings.json /home/node/
+COPY ./settings.yaml /home/node/
 
 USER 1000:1000
 
