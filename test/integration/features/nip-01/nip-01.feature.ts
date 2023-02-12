@@ -18,6 +18,7 @@ import {
   waitForNotice,
 } from '../helpers'
 import { Event } from '../../../../src/@types/event'
+import { isDraft } from '../shared'
 
 chai.use(sinonChai)
 const { expect } = chai
@@ -128,19 +129,19 @@ When(/^(\w+) sends a text_note event with content "([^"]+)" on (\d+)$/, async fu
 
   const event: Event = await createEvent({ pubkey, kind: 1, content, created_at: Number(createdAt) }, privkey)
 
-  await sendEvent(ws, event)
+  await sendEvent(ws, event, true)
   this.parameters.events[name].push(event)
 })
 
-When(/(\w+) sends a text_note event with invalid signature/, async function(name: string) {
-  const ws = this.parameters.clients[name] as WebSocket
+When(/(\w+) drafts a text_note event with invalid signature/, async function(name: string) {
   const { pubkey, privkey } = this.parameters.identities[name]
 
   const event: Event = await createEvent({ pubkey, kind: 1, content: "I'm cheating" }, privkey)
 
   event.sig = 'f'.repeat(128)
 
-  await sendEvent(ws, event)
+  event[isDraft] = true
+
   this.parameters.events[name].push(event)
 })
 
@@ -157,7 +158,9 @@ When(/(\w+) sends a recommend_server event with content "(.+?)"/, async function
 Then(/(\w+) receives a set_metadata event from (\w+)/, async function(name: string, author: string) {
   const ws = this.parameters.clients[name] as WebSocket
   const subscription = this.parameters.subscriptions[name][this.parameters.subscriptions[name].length - 1]
-  const receivedEvent = await waitForNextEvent(ws, subscription.name)
+  const event = this.parameters.events[author][this.parameters.events[author].length - 1]
+
+  const receivedEvent = await waitForNextEvent(ws, subscription.name, event.content)
 
   expect(receivedEvent.kind).to.equal(0)
   expect(receivedEvent.pubkey).to.equal(this.parameters.identities[author].pubkey)
@@ -166,8 +169,7 @@ Then(/(\w+) receives a set_metadata event from (\w+)/, async function(name: stri
 Then(/(\w+) receives a text_note event from (\w+) with content "([^"]+?)"/, async function(name: string, author: string, content: string) {
   const ws = this.parameters.clients[name] as WebSocket
   const subscription = this.parameters.subscriptions[name][this.parameters.subscriptions[name].length - 1]
-  const receivedEvent = await waitForNextEvent(ws, subscription.name)
-
+  const receivedEvent = await waitForNextEvent(ws, subscription.name, content)
   expect(receivedEvent.kind).to.equal(1)
   expect(receivedEvent.pubkey).to.equal(this.parameters.identities[author].pubkey)
   expect(receivedEvent.content).to.equal(content)
@@ -181,7 +183,7 @@ Then(/(\w+) receives a text_note event from (\w+) with content "(.+?)" on (\d+)/
 ) {
   const ws = this.parameters.clients[name] as WebSocket
   const subscription = this.parameters.subscriptions[name][this.parameters.subscriptions[name].length - 1]
-  const receivedEvent = await waitForNextEvent(ws, subscription.name)
+  const receivedEvent = await waitForNextEvent(ws, subscription.name, content)
 
   expect(receivedEvent.kind).to.equal(1)
   expect(receivedEvent.pubkey).to.equal(this.parameters.identities[author].pubkey)
@@ -225,7 +227,7 @@ Then(/(\w+) receives (\d+) events from (\w+) and (\w+)/, async function(
 Then(/(\w+) receives a recommend_server event from (\w+) with content "(.+?)"/, async function(name: string, author: string, content: string) {
   const ws = this.parameters.clients[name] as WebSocket
   const subscription = this.parameters.subscriptions[name][this.parameters.subscriptions[name].length - 1]
-  const receivedEvent = await waitForNextEvent(ws, subscription.name)
+  const receivedEvent = await waitForNextEvent(ws, subscription.name, content)
 
   expect(receivedEvent.kind).to.equal(2)
   expect(receivedEvent.pubkey).to.equal(this.parameters.identities[author].pubkey)

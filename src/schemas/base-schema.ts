@@ -1,6 +1,6 @@
 import Schema from 'joi'
 
-export const prefixSchema = Schema.string().case('lower').hex().min(1).max(64).label('prefix')
+export const prefixSchema = Schema.string().case('lower').hex().min(4).max(64).label('prefix')
 
 export const idSchema = Schema.string().case('lower').hex().length(64).label('id')
 
@@ -11,6 +11,10 @@ export const kindSchema = Schema.number().min(0).multiple(1).label('kind')
 export const signatureSchema = Schema.string().case('lower').hex().length(128).label('sig')
 
 export const subscriptionSchema = Schema.string().min(1).max(255).label('subscriptionId')
+
+const seconds = (value: any, helpers: any) => (Number.isSafeInteger(value) && Math.log10(value) < 10) ? value : helpers.error('any.invalid')
+
+export const createdAtSchema = Schema.number().min(0).multiple(1).custom(seconds)
 
 // [<string>, <string> 0..*]
 export const tagSchema = Schema.array()

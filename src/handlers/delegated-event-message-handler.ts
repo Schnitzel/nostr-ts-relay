@@ -12,7 +12,6 @@ const debug = createLogger('delegated-event-message-handler')
 
 export class DelegatedEventMessageHandler extends EventMessageHandler implements IMessageHandler {
   public async handleMessage(message: IncomingEventMessage): Promise<void> {
-    debug('received message: %o', message)
     const [, event] = message
 
     let reason = await this.isEventValid(event)
@@ -35,6 +34,13 @@ export class DelegatedEventMessageHandler extends EventMessageHandler implements
       return
     }
 
+    reason = await this.isUserAdmitted(event)
+    if (reason) {
+      debug('event %s rejected: %s', event.id, reason)
+      this.webSocket.emit(WebSocketAdapterEvent.Message, createCommandResult(event.id, false, reason))
+      return
+    }
+
     const [, delegator] = event.tags.find((tag) => tag.length === 4 && tag[0] === EventTags.Delegation)
     const delegatedEvent: DelegatedEvent = {
       ...event,
@@ -51,7 +57,7 @@ export class DelegatedEventMessageHandler extends EventMessageHandler implements
     try {
       await strategy.execute(delegatedEvent)
     } catch (error) {
-      debug('error handling message %o: %o', message, error)
+      console.error('error handling message', message, error)
       this.webSocket.emit(WebSocketAdapterEvent.Message, createCommandResult(event.id, false, 'error: unable to process event'))
     }
   }

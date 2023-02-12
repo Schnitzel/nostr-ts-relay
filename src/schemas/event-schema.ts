@@ -1,6 +1,7 @@
 import Schema from 'joi'
 
 import {
+  createdAtSchema,
   idSchema,
   kindSchema,
   pubkeySchema,
@@ -8,8 +9,6 @@ import {
   tagSchema,
 } from './base-schema'
 
-
-export const seconds = (value: any, helpers: any) => (Math.log10(value) < 10) ? value : helpers.error('any.invalid')
 
 /**
  * {
@@ -30,11 +29,12 @@ export const eventSchema = Schema.object({
   // NIP-01
   id: idSchema.required(),
   pubkey: pubkeySchema.required(),
-  created_at: Schema.number().min(0).multiple(1).custom(seconds).required(),
+  created_at: createdAtSchema.required(),
   kind: kindSchema.required(),
-  tags: Schema.array().items(tagSchema).required(),
+  tags: Schema.array().items(tagSchema).max(2500).required(),
   content: Schema.string()
     .allow('')
+    .max(100 * 1024) // 100 kB
     .required(),
   sig: signatureSchema.required(),
 }).unknown(false)

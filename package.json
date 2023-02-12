@@ -1,6 +1,6 @@
 {
-  "name": "nostr-ts-relay",
-  "version": "1.11.0",
+  "name": "nostream",
+  "version": "1.22.2",
   "description": "A Nostr relay written in Typescript.",
   "supportedNips": [
     1,
@@ -14,7 +14,10 @@
     20,
     22,
     26,
-    33
+    28,
+    33,
+    40,
+    111
   ],
   "main": "src/index.ts",
   "scripts": {
@@ -24,7 +27,8 @@
     "prestart": "npm run build",
     "start": "cd dist && node src/index.js",
     "build:check": "npm run build -- --noEmit",
-    "lint": "eslint -o .lint-reports/eslint.json -f json --ext .ts ./src ./test",
+    "lint": "eslint --ext .ts ./src ./test",
+    "lint:report": "eslint -o .lint-reports/eslint.json -f json --ext .ts ./src ./test",
     "lint:fix": "npm run lint -- --fix",
     "db:migrate": "knex migrate:latest",
     "db:migrate:rollback": "knex migrate:rollback",
@@ -33,7 +37,7 @@
     "test:unit": "mocha 'test/**/*.spec.ts'",
     "test:unit:watch": "npm run test:unit -- --min --watch --watch-files src/**/*,test/**/*",
     "cover:unit": "nyc --report-dir .coverage/unit npm run test:unit",
-    "docker:build": "docker build -t nostr-ts-relay .",
+    "docker:build": "docker build -t nostream .",
     "pretest:integration": "mkdir -p .test-reports/integration",
     "test:integration": "cucumber-js",
     "cover:integration": "nyc --report-dir .coverage/integration npm run test:integration -- -p cover",
@@ -51,19 +55,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Cameri/nostr-ts-relay.git"
+    "url": "git+https://github.com/Cameri/nostream.git"
   },
   "keywords": [
     "nostr",
     "relay",
     "typescript"
   ],
-  "author": "Ricardo Arturo Cabral Mejía",
+  "author": "Ricardo Arturo Cabral Mejía (npub1qqqqqqyz0la2jjl752yv8h7wgs3v098mh9nztd4nr6gynaef6uqqt0n47m)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Cameri/nostr-ts-relay/issues"
+    "url": "https://github.com/Cameri/nostream/issues"
   },
-  "homepage": "https://github.com/Cameri/nostr-ts-relay#readme",
+  "homepage": "https://github.com/Cameri/nostream#readme",
   "devDependencies": {
     "@commitlint/cli": "17.2.0",
     "@commitlint/config-conventional": "17.2.0",
@@ -77,8 +81,10 @@
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.5",
     "@types/debug": "4.1.7",
+    "@types/express": "4.17.15",
+    "@types/js-yaml": "4.0.5",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^17.0.24",
+    "@types/node": "18.11.18",
     "@types/pg": "^8.6.5",
     "@types/ramda": "^0.28.13",
     "@types/sinon": "^10.0.11",
@@ -98,23 +104,34 @@
     "rimraf": "^3.0.2",
     "semantic-release": "19.0.5",
     "semantic-release-telegram": "1.6.0",
+    "sinon": "15.0.1",
     "sinon-chai": "^3.7.0",
     "source-map-support": "^0.5.21",
-    "ts-node": "^10.9.1",
+    "ts-node": "10.9.1",
     "ts-node-dev": "^1.1.8",
-    "typescript": "4.6",
+    "typescript": "4.6.4",
     "uuid": "^8.3.2"
   },
   "dependencies": {
-    "@noble/secp256k1": "1.7.0",
+    "@noble/secp256k1": "1.7.1",
+    "axios": "1.2.3",
+    "bech32": "2.0.0",
+    "body-parser": "1.20.1",
     "debug": "4.3.4",
+    "dinero.js": "2.0.0-alpha.13",
+    "dotenv": "16.0.3",
+    "express": "4.18.2",
+    "helmet": "6.0.1",
     "joi": "17.7.0",
-    "knex": "2.3.0",
+    "js-yaml": "4.1.0",
+    "knex": "2.4.1",
     "pg": "8.8.0",
     "pg-query-stream": "4.2.4",
     "ramda": "0.28.0",
     "redis": "4.5.1",
-    "ws": "8.11.0"
+    "rxjs": "7.8.0",
+    "ws": "8.12.0",
+    "tor-control-ts": "^1.0.0"
   },
   "config": {
     "commitizen": {

@@ -2,9 +2,13 @@ import { IRunnable } from '../@types/base'
 import { IWebSocketServerAdapter } from '../@types/adapters'
 
 import { createLogger } from '../factories/logger-factory'
+import { FSWatcher } from 'fs'
+import { SettingsStatic } from '../utils/settings'
 
 const debug = createLogger('app-worker')
 export class AppWorker implements IRunnable {
+  private watchers: FSWatcher[] | undefined
+
   public constructor(
     private readonly process: NodeJS.Process,
     private readonly adapter: IWebSocketServerAdapter
@@ -19,19 +23,24 @@ export class AppWorker implements IRunnable {
   }
 
   public run(): void {
-    const port = Number(process.env.RELAY_PORT) || 8008
+    this.watchers = SettingsStatic.watchSettings()
 
-    this.adapter.listen(port)
+    const port = process.env.PORT || process.env.RELAY_PORT || 8008
+    this.adapter.listen(typeof port === 'number' ? port : Number(port))
   }
 
   private onMessage(message: { eventName: string, event: unknown }): void {
-    debug('broadcast message received: %o', message)
     this.adapter.emit(message.eventName, message.event)
   }
 
   private onError(error: Error) {
-    debug('error: %o', error)
-    throw error
+    if (error.name === 'TypeError' && error.message === "Cannot read properties of undefined (reading '__knexUid')") {
+      console.error(
+        'Unable to acquire connection. Please increase DB_MAX_POOL_SIZE, DB_ACQUIRE_CONNECTION_TIMEOUT and tune postgresql.conf to make use of server\'s resources.'
+      )
+      return
+    }
+    console.error('uncaught error:', error)
   }
 
   private onExit() {
@@ -43,6 +52,12 @@ export class AppWorker implements IRunnable {
 
   public close(callback?: () => void) {
     debug('closing')
+    if (Array.isArray(this.watchers)) {
+      for (const watcher of this.watchers) {
+        watcher.close()
+      }
+    }
     this.adapter.close(callback)
+    debug('closed')
   }
 }

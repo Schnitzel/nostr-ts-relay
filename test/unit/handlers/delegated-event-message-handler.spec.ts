@@ -11,6 +11,7 @@ import { IncomingEventMessage, MessageType } from '../../../src/@types/messages'
 import { DelegatedEventMessageHandler } from '../../../src/handlers/delegated-event-message-handler'
 import { Event } from '../../../src/@types/event'
 import { EventMessageHandler } from '../../../src/handlers/event-message-handler'
+import { IUserRepository } from '../../../src/@types/repositories'
 import { WebSocketAdapterEvent } from '../../../src/constants/adapter'
 
 const { expect } = chai
@@ -18,11 +19,12 @@ const { expect } = chai
 describe('DelegatedEventMessageHandler', () => {
   let webSocket: EventEmitter
   let handler: DelegatedEventMessageHandler
+  let userRepository: IUserRepository
   let event: Event
   let message: IncomingEventMessage
   let sandbox: Sinon.SinonSandbox
 
-  let originalConsoleWarn: (message?: any, ...optionalParams: any[]) => void | undefined = undefined
+  let originalConsoleWarn: any = undefined
 
   beforeEach(() => {
     sandbox = Sinon.createSandbox()
@@ -53,10 +55,12 @@ describe('DelegatedEventMessageHandler', () => {
     let onMessageSpy: Sinon.SinonSpy
     let strategyExecuteStub: Sinon.SinonStub
     let isRateLimitedStub: Sinon.SinonStub
+    let isUserAdmitted: Sinon.SinonStub
 
     beforeEach(() => {
       canAcceptEventStub = sandbox.stub(DelegatedEventMessageHandler.prototype, 'canAcceptEvent' as any)
       isEventValidStub = sandbox.stub(DelegatedEventMessageHandler.prototype, 'isEventValid' as any)
+      isUserAdmitted = sandbox.stub(EventMessageHandler.prototype, 'isUserAdmitted' as any)
       strategyExecuteStub = sandbox.stub()
       strategyFactoryStub = sandbox.stub().returns({
         execute: strategyExecuteStub,
@@ -69,6 +73,7 @@ describe('DelegatedEventMessageHandler', () => {
       handler = new DelegatedEventMessageHandler(
         webSocket as any,
         strategyFactoryStub,
+        userRepository,
         () => ({}) as any,
         () => ({ hit: async () => false }),
       )
@@ -119,6 +124,21 @@ describe('DelegatedEventMessageHandler', () => {
       expect(strategyFactoryStub).not.to.have.been.called
     })
 
+    it('rejects event is user is not admitted', async () => {
+      isUserAdmitted.resolves('not admitted')
+
+      await handler.handleMessage(message)
+
+      expect(isRateLimitedStub).to.have.been.calledOnceWithExactly(event)
+      expect(isUserAdmitted).to.have.been.calledOnceWithExactly(event)
+      expect(onMessageSpy).to.have.been.calledOnceWithExactly([
+        MessageType.OK,
+        event.id,
+        false,
+        'not admitted',
+      ])
+    })
+
     it('does not call strategy if none given', async () => {
       isEventValidStub.returns(undefined)
       canAcceptEventStub.returns(undefined)
@@ -151,9 +171,10 @@ describe('DelegatedEventMessageHandler', () => {
     })
 
     it('does not reject if strategy rejects', async () => {
+      const error = new Error('mistakes were made')
       isEventValidStub.returns(undefined)
       canAcceptEventStub.returns(undefined)
-      strategyExecuteStub.rejects()
+      strategyExecuteStub.rejects(error)
 
       return expect(handler.handleMessage(message)).to.eventually.be.fulfilled
     })

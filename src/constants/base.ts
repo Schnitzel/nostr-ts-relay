@@ -14,6 +14,9 @@ export enum EventKinds {
   CHANNEL_MUTE_USER = 44,
   CHANNEL_RESERVED_FIRST = 45,
   CHANNEL_RESERVED_LAST = 49,
+  // Relay-only
+  RELAY_INVITE = 50,
+  INVOICE_UPDATE = 402,
   // Replaceable events
   REPLACEABLE_FIRST = 10000,
   REPLACEABLE_LAST = 19999,
@@ -33,7 +36,14 @@ export enum EventTags {
   //  Multicast = 'm',
   Delegation = 'delegation',
   Deduplication = 'd',
+  Expiration = 'expiration',
+}
+
+export enum PaymentsProcessors {
+  ZEBEDEE = 'zebedee',
 }
 
 export const EventDelegatorMetadataKey = Symbol('Delegator')
 export const EventDeduplicationMetadataKey = Symbol('Deduplication')
+export const ContextMetadataKey = Symbol('Context')
+export const EventExpirationTimeMetadataKey = Symbol('Expiration')
