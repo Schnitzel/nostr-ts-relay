@@ -31,6 +31,8 @@ ENV REDIS_PORT=6379
 ENV REDIS_USER=default
 ENV REDIS_PASSWORD=default
 
+ENV DEBUG=primary:*,worker:*
+
 WORKDIR /app
 RUN apk add --no-cache --update git
 
